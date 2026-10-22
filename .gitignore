@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Tetap lacak contoh env
+!.env.example
+
+# Data pribadi (jaga-jaga kalau tersalin ke sini)
+*.csv
+category_map.json
