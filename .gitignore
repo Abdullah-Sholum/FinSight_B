@@ -46,3 +46,6 @@ next-env.d.ts
 # Data pribadi (jaga-jaga kalau tersalin ke sini)
 *.csv
 category_map.json
+
+# Prisma Client hasil generate
+/src/generated

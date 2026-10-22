@@ -1,0 +1,144 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  color     String?
+  sortOrder Int      @default(0)
+  isSystem  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+
+  rules    CategoryRule[]
+  expenses Expense[]
+
+  @@map("categories")
+}
+
+enum DatasetType {
+  REAL
+  SYNTHETIC
+}
+
+enum ImportStatus {
+  COMPLETED
+  FAILED
+  ROLLED_BACK
+}
+
+model Dataset {
+  id          Int         @id @default(autoincrement())
+  name        String      @unique
+  type        DatasetType
+  seed        Int?
+  isPublished Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  entries       DailyEntry[]
+  importBatches ImportBatch[]
+  expenses      Expense[] 
+
+  @@map("datasets")
+}
+
+model ImportBatch {
+  id          Int          @id @default(autoincrement())
+  datasetId   Int
+  fileName    String
+  status      ImportStatus
+  totalRows   Int          @default(0)
+  successRows Int          @default(0)
+  failedRows  Int          @default(0)
+  errors      Json?
+  createdAt   DateTime     @default(now())
+
+  dataset Dataset      @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  entries DailyEntry[]
+  expenses Expense[]
+
+  @@index([datasetId])
+  @@map("import_batches")
+}
+
+model DailyEntry {
+  id            Int      @id @default(autoincrement())
+  datasetId     Int
+  date          DateTime @db.Date
+  rawLine       String
+  sourceFile    String?
+  writtenTotal  Int?
+  isEmptyDay    Boolean  @default(false)
+  importBatchId Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  dataset     Dataset      @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  importBatch ImportBatch? @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+  expenses    Expense[]
+
+  @@unique([datasetId, date])
+  @@index([importBatchId])
+  @@map("daily_entries")
+}
+
+enum CategorySource {
+  IMPORT
+  RULE
+  MANUAL
+}
+
+model CategoryRule {
+  id         Int      @id @default(autoincrement())
+  keyword    String   @unique
+  categoryId Int
+  priority   Int      @default(0)
+  isActive   Boolean  @default(true)
+  note       String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  category Category  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  expenses Expense[]
+
+  @@index([categoryId])
+  @@map("category_rules")
+}
+
+model Expense {
+  id             Int            @id @default(autoincrement())
+  datasetId      Int
+  entryId        Int?
+  date           DateTime       @db.Date
+  item           String
+  amount         Int
+  categoryId     Int
+  categorySource CategorySource @default(IMPORT)
+  ruleId         Int?
+  legacyId       Int?
+  importBatchId  Int?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  dataset     Dataset       @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  entry       DailyEntry?   @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  category    Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  rule        CategoryRule? @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+  importBatch ImportBatch?  @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+
+  @@unique([datasetId, legacyId])
+  @@index([datasetId, date])
+  @@index([datasetId, categoryId])
+  @@index([entryId])
+  @@index([importBatchId])
+  @@map("expenses")
+}
+
