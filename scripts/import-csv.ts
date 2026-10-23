@@ -4,13 +4,22 @@ import path from "node:path";
 import { prisma } from "@/lib/prisma";
 import { parseCsv } from "@/lib/import/parse";
 import { buildPlan } from "@/lib/import/plan";
+import {
+  commitPlan,
+  getOrCreateRealDataset,
+  REAL_DATASET_NAME,
+} from "@/lib/import/commit";
 
-const DATASET_NAME = "Data Asli";
 const rupiah = (n: number) => `Rp${n.toLocaleString("id-ID")}`;
 
 async function main() {
-  const fileName = process.argv[2];
-  if (!fileName) throw new Error("Pemakaian: npx tsx scripts/import-csv.ts <namafile.csv>");
+  const args = process.argv.slice(2);
+  const fileName = args.find((a) => !a.startsWith("--"));
+  const commit = args.includes("--commit");
+  const allowErrors = args.includes("--allow-errors");
+  if (!fileName) {
+    throw new Error("Pemakaian: npx tsx scripts/import-csv.ts <file.csv> [--commit] [--allow-errors]");
+  }
 
   const dir = process.env.PRIVATE_DATA_DIR;
   if (!dir) throw new Error("PRIVATE_DATA_DIR belum diatur di .env");
@@ -21,9 +30,12 @@ async function main() {
   const categories = await prisma.category.findMany();
   const categoryIdByName = new Map(categories.map((c) => [c.name, c.id]));
 
-  const dataset = await prisma.dataset.findUnique({ where: { name: DATASET_NAME } });
+  const dataset = await prisma.dataset.findUnique({ where: { name: REAL_DATASET_NAME } });
   const existing = dataset
-    ? await prisma.dailyEntry.findMany({ where: { datasetId: dataset.id }, select: { date: true } })
+    ? await prisma.dailyEntry.findMany({
+        where: { datasetId: dataset.id },
+        select: { date: true },
+      })
     : [];
   const existingDates = new Set(existing.map((e) => e.date.toISOString().slice(0, 10)));
 
@@ -36,7 +48,7 @@ async function main() {
   });
 
   const s = plan.stats;
-  console.log("=== LAPORAN DRY RUN (tidak ada yang disimpan) ===");
+  console.log(commit ? "=== LAPORAN IMPORT ===" : "=== LAPORAN DRY RUN (tidak ada yang disimpan) ===");
   console.log(`Baris di CSV              : ${s.totalRows}`);
   console.log(`Baris error               : ${s.errorRows}`);
   console.log(`Hari yang akan diimpor    : ${s.importedDays}`);
@@ -44,7 +56,7 @@ async function main() {
   console.log(`  - hari kosong (None)    : ${s.emptyDays}`);
   console.log(`Item pengeluaran          : ${s.expenseCount}`);
   console.log(`Total nominal             : ${rupiah(s.totalAmount)}`);
-  console.log(`Uncategorized             : ${s.uncategorizedPct.toFixed(2)}%`);
+  console.log(`Uncategorized (per item)  : ${s.uncategorizedPct.toFixed(2)}%`);
   console.log(`Tanggal dilewati (sudah ada): ${plan.skippedExistingDates.length}`);
   console.log(`Tanggal ditolak           : ${plan.rejectedDates.length}`);
   console.log(`Tanggal tanpa catatan (celah): ${plan.gapDates.length}`);
@@ -61,6 +73,27 @@ async function main() {
       console.log(`  baris ${e.line}${e.legacyId ? ` (id ${e.legacyId})` : ""}: ${e.message}`);
     }
   }
+
+  if (!commit) {
+    console.log("\nIni dry run. Tambahkan --commit untuk menyimpan.");
+    return;
+  }
+  if (plan.errors.length > 0 && !allowErrors) {
+    throw new Error("Ada error. Perbaiki CSV, atau pakai --allow-errors untuk mengimpor hari yang valid saja.");
+  }
+  if (plan.days.length === 0) {
+    console.log("\nTidak ada hari baru untuk diimpor. Tidak ada yang disimpan.");
+    return;
+  }
+
+  const ds = await getOrCreateRealDataset();
+  const batch = await commitPlan({
+    datasetId: ds.id,
+    fileName,
+    totalRows: parsed.totalRows,
+    plan,
+  });
+  console.log(`\nSelesai. Batch #${batch.id}: ${plan.days.length} hari dan ${s.expenseCount} item tersimpan.`);
 }
 
 main()
