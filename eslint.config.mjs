@@ -12,7 +12,30 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    
   ]),
+    {
+    files: ["src/app/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": ["error", {
+        patterns: [{
+          group: ["**/lib/prisma", "**/lib/data/insights"],
+          message: "Akses data hanya lewat src/lib/data/admin atau public.",
+        }],
+      }],
+    },
+  },
+  {
+    files: ["src/app/(public)/**/*.{ts,tsx}", "src/components/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": ["error", {
+        patterns: [{
+          group: ["**/lib/prisma", "**/lib/data/insights", "**/lib/data/admin"],
+          message: "Kode publik dan komponen tidak boleh mengimpor akses data admin.",
+        }],
+      }],
+    },
+  },
 ]);
 
 export default eslintConfig;
