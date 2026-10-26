@@ -19,7 +19,7 @@ const eslintConfig = defineConfig([
     rules: {
       "no-restricted-imports": ["error", {
         patterns: [{
-          group: ["**/lib/prisma", "**/lib/data/insights"],
+          group: ["**/lib/prisma", "**/lib/data/insights", "**/lib/data/admin-core"],
           message: "Akses data hanya lewat src/lib/data/admin atau public.",
         }],
       }],
@@ -30,7 +30,7 @@ const eslintConfig = defineConfig([
     rules: {
       "no-restricted-imports": ["error", {
         patterns: [{
-          group: ["**/lib/prisma", "**/lib/data/insights", "**/lib/data/admin"],
+          group: ["**/lib/prisma", "**/lib/data/insights", "**/lib/data/admin-core", "**/lib/data/admin"],
           message: "Kode publik dan komponen tidak boleh mengimpor akses data admin.",
         }],
       }],
