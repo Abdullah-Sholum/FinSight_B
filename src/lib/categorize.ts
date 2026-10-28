@@ -1,7 +1,14 @@
 export type RuleInput = {
+  id?: number;
   keyword: string;
   priority: number;
   categoryName: string;
+};
+
+export type RuleMatch = {
+  keyword: string;
+  categoryName: string;
+  ruleId: number | null;
 };
 
 export const normalizeText = (s: string) =>
@@ -17,7 +24,7 @@ export function buildMatcher(rules: RuleInput[]) {
     ),
   }));
 
-  return (item: string): { keyword: string; categoryName: string } | null => {
+  return (item: string): RuleMatch | null => {
     const text = normalizeText(item);
     let best: (typeof compiled)[number] | null = null;
     for (const r of compiled) {
@@ -30,6 +37,8 @@ export function buildMatcher(rules: RuleInput[]) {
         best = r;
       }
     }
-    return best ? { keyword: best.keyword, categoryName: best.categoryName } : null;
+    return best
+      ? { keyword: best.keyword, categoryName: best.categoryName, ruleId: best.id ?? null }
+      : null;
   };
 }

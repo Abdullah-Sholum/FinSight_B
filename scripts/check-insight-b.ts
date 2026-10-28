@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { prisma } from "@/lib/prisma";
-import { getAdminOverview } from "@/lib/data/admin";
+import { getAdminOverview } from "@/lib/data/admin-core";
 
 const rupiah = (n: number) => `Rp${n.toLocaleString("id-ID")}`;
 const pct = (x: number) => `${(x * 100).toFixed(2)}%`;
