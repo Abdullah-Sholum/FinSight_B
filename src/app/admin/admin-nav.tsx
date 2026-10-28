@@ -8,6 +8,8 @@ const LINKS = [
   { href: "/admin", label: "Ringkasan", exact: true },
   { href: "/admin/entri", label: "Entri harian", exact: false },
   { href: "/admin/kategori", label: "Kategori", exact: false },
+  { href: "/admin/aturan", label: "Aturan", exact: false },
+  { href: "/admin/kualitas", label: "Kualitas data", exact: false },
 ];
 
 export function AdminNav() {

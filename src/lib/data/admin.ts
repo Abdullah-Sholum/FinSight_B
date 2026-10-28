@@ -46,3 +46,18 @@ export async function getRuleInputs() {
   await requireAdmin();
   return core.getRuleInputs();
 }
+
+export async function getRulesPage(opts: Parameters<typeof core.getRulesPage>[0]) {
+  await requireAdmin();
+  return core.getRulesPage(opts);
+}
+
+export async function getReapplyPreview() {
+  await requireAdmin();
+  return core.getReapplyPreview();
+}
+
+export async function getQualityReport(today: string) {
+  await requireAdmin();
+  return core.getQualityReport(today);
+}

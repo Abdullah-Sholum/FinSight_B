@@ -4,6 +4,7 @@ import * as insights from "./insights";
 import type { DateRange } from "./insights";
 import { isMonthKey, shiftMonth } from "@/lib/dates";
 import { isRealDate } from "@/lib/validation/import-row";
+import * as ruleEffects from "@/lib/services/rule-effects";
 
 export async function getRealDataset() {
   return prisma.dataset.findUnique({
@@ -189,4 +190,76 @@ export async function getRuleInputs() {
     priority: r.priority,
     categoryName: r.category.name,
   }));
+}
+
+export async function getRulesPage(opts: {
+  q?: string;
+  categoryId?: number;
+  status?: "aktif" | "nonaktif";
+  page?: number;
+}) {
+  const pageSize = 50;
+  const page = Math.max(1, opts.page ?? 1);
+  const q = opts.q?.trim().toLowerCase();
+  const where = {
+    ...(q ? { keyword: { contains: q } } : {}),
+    ...(opts.categoryId ? { categoryId: opts.categoryId } : {}),
+    ...(opts.status ? { isActive: opts.status === "aktif" } : {}),
+  };
+
+  const [total, rows, hits] = await Promise.all([
+    prisma.categoryRule.count({ where }),
+    prisma.categoryRule.findMany({
+      where,
+      orderBy: { keyword: "asc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      select: {
+        id: true,
+        keyword: true,
+        categoryId: true,
+        priority: true,
+        isActive: true,
+        note: true,
+        category: { select: { name: true, color: true } },
+      },
+    }),
+    ruleEffects.getRuleHits(),
+  ]);
+
+  return {
+    page,
+    total,
+    pages: Math.max(1, Math.ceil(total / pageSize)),
+    rules: rows.map((r) => ({
+      id: r.id,
+      keyword: r.keyword,
+      categoryId: r.categoryId,
+      categoryName: r.category.name,
+      categoryColor: r.category.color,
+      priority: r.priority,
+      isActive: r.isActive,
+      note: r.note,
+      hits: r.isActive ? (hits.get(r.id) ?? 0) : null,
+    })),
+  };
+}
+
+export async function getReapplyPreview() {
+  return ruleEffects.getReapplyPreview();
+}
+
+export async function getQualityReport(today: string) {
+  const ds = await getRealDataset();
+  if (!ds) return null;
+  const [quality, unrecorded, drift] = await Promise.all([
+    insights.getDataQuality(ds.id),
+    getUnrecordedDates(today),
+    ruleEffects.getReapplyPreview(),
+  ]);
+  return {
+    quality,
+    unrecordedCount: unrecorded.count,
+    drift: { totalChanged: drift.totalChanged, metadataOnly: drift.metadataOnly },
+  };
 }

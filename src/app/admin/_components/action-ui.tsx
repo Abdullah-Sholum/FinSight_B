@@ -58,7 +58,7 @@ export function SubmitButton({
   size,
 }: {
   children: React.ReactNode;
-  variant?: "default" | "destructive" | "outline";
+  variant?: "default" | "destructive" | "outline" | "ghost";
   size?: "default" | "sm";
 }) {
   const { pending } = useFormStatus();

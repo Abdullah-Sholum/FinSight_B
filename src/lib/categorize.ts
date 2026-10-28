@@ -42,3 +42,9 @@ export function buildMatcher(rules: RuleInput[]) {
       : null;
   };
 }
+
+export function containsPhrase(text: string, phrase: string) {
+  return new RegExp(
+    `(?:^|[^a-z0-9])${escapeRegExp(normalizeText(phrase))}(?:$|[^a-z0-9])`,
+  ).test(normalizeText(text));
+}
