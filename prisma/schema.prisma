@@ -40,6 +40,8 @@ model Dataset {
   type        DatasetType
   seed        Int?
   isPublished Boolean     @default(false)
+  config      Json?
+  publishedAt DateTime?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 

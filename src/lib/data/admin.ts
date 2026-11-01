@@ -66,3 +66,13 @@ export async function getImportBatches() {
   await requireAdmin();
   return core.getImportBatches();
 }
+
+export async function getSyntheticList() {
+  await requireAdmin();
+  return core.getSyntheticList();
+}
+
+export async function getSyntheticDetail(id: number) {
+  await requireAdmin();
+  return core.getSyntheticDetail(id);
+}

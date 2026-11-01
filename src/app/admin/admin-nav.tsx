@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/admin/aturan", label: "Aturan", exact: false },
   { href: "/admin/kualitas", label: "Kualitas data", exact: false },
   { href: "/admin/import", label: "Import", exact: false },
+  { href: "/admin/sintesis", label: "Sintesis", exact: false },
 ];
 
 export function AdminNav() {
