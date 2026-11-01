@@ -6,6 +6,7 @@ import { isMonthKey, shiftMonth } from "@/lib/dates";
 import { isRealDate } from "@/lib/validation/import-row";
 import * as ruleEffects from "@/lib/services/rule-effects";
 import type { BatchError } from "@/lib/import-types";
+import { readConfig } from "@/lib/synthetic/config";
 
 export async function getRealDataset() {
   return prisma.dataset.findUnique({
@@ -312,4 +313,86 @@ export async function getImportBatches() {
       ? (b.errors as unknown as BatchError[]).slice(0, 100)
       : [],
   }));
+}
+
+export async function getSyntheticList() {
+  const rows = await prisma.dataset.findMany({
+    where: { type: "SYNTHETIC" },
+    orderBy: { id: "desc" },
+    select: {
+      id: true,
+      name: true,
+      seed: true,
+      isPublished: true,
+      publishedAt: true,
+      createdAt: true,
+      config: true,
+    },
+  });
+
+  return rows.map((r) => {
+    const c = readConfig(r.config);
+    return {
+      id: r.id,
+      name: r.name,
+      seed: r.seed,
+      isPublished: r.isPublished,
+      publishedAt: r.publishedAt?.toISOString() ?? null,
+      createdAt: r.createdAt.toISOString(),
+      privacy: c?.privacy ?? null,
+      endDate: c?.endDate ?? null,
+      stats: c?.stats ?? null,
+      integrityOk: c?.integrity.ok ?? null,
+      plausibilityPassed: c?.plausibility.passed ?? null,
+      leakPassed: c?.leak.passed ?? null,
+    };
+  });
+}
+
+export async function getSyntheticDetail(id: number) {
+  const ds = await prisma.dataset.findFirst({
+    where: { id, type: "SYNTHETIC" },
+    select: {
+      id: true,
+      name: true,
+      seed: true,
+      isPublished: true,
+      publishedAt: true,
+      createdAt: true,
+      config: true,
+    },
+  });
+  if (!ds) return null;
+  const c = readConfig(ds.config);
+
+  const [summary, months, categories, weekdayWeekend, topDays] = await Promise.all([
+    insights.getSummary(id),
+    insights.getMonthlyTotals(id),
+    insights.getCategoryComposition(id),
+    insights.getWeekdayVsWeekend(id),
+    insights.getTopDays(id, {}, 5),
+  ]);
+
+  return {
+    dataset: {
+      id: ds.id,
+      name: ds.name,
+      seed: ds.seed,
+      isPublished: ds.isPublished,
+      publishedAt: ds.publishedAt?.toISOString() ?? null,
+      createdAt: ds.createdAt.toISOString(),
+    },
+    config: c && {
+      generatorVersion: c.generatorVersion,
+      privacy: c.privacy,
+      endDate: c.endDate,
+      fingerprint: c.contentFingerprint,
+      stats: c.stats,
+      integrity: c.integrity,
+      plausibility: c.plausibility,
+      leak: c.leak,
+      review: c.profile.review,
+    },
+    preview: { summary, months, categories, weekdayWeekend, topDays },
+  };
 }

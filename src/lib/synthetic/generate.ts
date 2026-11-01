@@ -8,10 +8,12 @@ const MIN_AMOUNT = 1_000;
 
 // di bawah Rp100.000 dibulatkan ke 500, selebihnya ke 1.000
 function roundAmount(x: number) {
-  const step = x < 100_000 ? 500 : 1_000;
+  const step = x < 100_000 ? 500 : 10_000;
   return Math.max(MIN_AMOUNT, Math.round(x / step) * step);
 }
 
+// pembelian besar dibulatkan ke 10.000, supaya tidak mungkin kebetulan sama dengan nominal khas data asli
+const roundBig = (x: number) => Math.round(x / 10_000) * 10_000;
 const rankWeights = (n: number) => Array.from({ length: n }, (_, i) => 1 / (1 + i * 0.35));
 
 export function generateSynthetic(
@@ -39,7 +41,7 @@ export function generateSynthetic(
   const startDate = addDays(opts.endDate, -(profile.days - 1));
   const catWeights = profile.categories.map((c) => c.weight);
   const pickItem = (list: string[]) => list[rng.weighted(rankWeights(list.length))];
-  const regularCeiling = profile.spikes ? profile.spikes.minAmount - 1_000 : Infinity;
+  const regularCeiling = profile.spikes ? profile.spikes.minAmount - 10_000 : Infinity;
   
   const days: SyntheticDay[] = [];
   for (let i = 0; i < profile.days; i++) {
@@ -77,7 +79,7 @@ export function generateSynthetic(
 
     for (const idx of chosen) {
       const cat = sp.categories[rng.weighted(spikeWeights)];
-      const amount = roundAmount(
+      const amount = roundBig(
         Math.exp(rng.uniform(Math.log(sp.minAmount), Math.log(sp.maxAmount))),
       );
       days[idx].expenses.push({

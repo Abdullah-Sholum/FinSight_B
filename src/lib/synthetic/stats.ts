@@ -68,3 +68,15 @@ export function computeStats(records: DayRecord[]) {
 export function fingerprint(days: SyntheticDay[]) {
   return createHash("sha256").update(JSON.stringify(days)).digest("hex");
 }
+
+// sidik jari isi dataset, tidak peka urutan item di dalam satu hari; untuk mendeteksi perubahan di database
+export function contentFingerprint(days: SyntheticDay[]) {
+  const canon = [...days]
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map((d) => ({
+      date: d.date,
+      empty: d.isEmptyDay,
+      items: d.expenses.map((e) => `${e.categoryName}|${e.item}|${e.amount}`).sort(),
+    }));
+  return createHash("sha256").update(JSON.stringify(canon)).digest("hex");
+}

@@ -1,5 +1,5 @@
 // Naikkan versi ini kalau urutan penarikan acak atau rumus generator berubah.
-export const GENERATOR_VERSION = "2";
+export const GENERATOR_VERSION = "4";
 
 export type PrivacyLevel = "LOW" | "BALANCED" | "HIGH";
 
