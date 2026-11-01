@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { prisma } from "@/lib/prisma";
-import { getAdminOverview, getRealDataset } from "@/lib/data/admin";
+import { getAdminOverview, getRealDataset } from "@/lib/data/admin-core";
 
 const GOLDEN = {
   total: 32258500 as number | null,

@@ -23,6 +23,7 @@ type PlanInput = {
   totalRows: number;
   categoryIdByName: Map<string, number>;
   existingDates: Set<string>;
+  maxDate?: string;
 };
 
 function findGaps(sortedDates: string[]) {
@@ -77,6 +78,15 @@ export function buildPlan(input: PlanInput) {
   for (const [date, rows] of [...byDate].sort(([a], [b]) => a.localeCompare(b))) {
     const expenseRows = rows.filter(isExpense);
     const emptyRows = rows.filter((r) => r.kind === "empty");
+    
+    if (input.maxDate && date > input.maxDate) {
+      errors.push({
+        line: rows[0].line,
+        date,
+        message: `Tanggal ${date} berada di masa depan`,
+      });
+      badDates.add(date);
+    }
 
     if (emptyRows.length > 0 && expenseRows.length > 0) {
       errors.push({ line: emptyRows[0].line, date, message: "Hari kosong bercampur dengan baris pengeluaran di tanggal yang sama" });
