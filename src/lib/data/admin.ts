@@ -61,3 +61,8 @@ export async function getQualityReport(today: string) {
   await requireAdmin();
   return core.getQualityReport(today);
 }
+
+export async function getImportBatches() {
+  await requireAdmin();
+  return core.getImportBatches();
+}

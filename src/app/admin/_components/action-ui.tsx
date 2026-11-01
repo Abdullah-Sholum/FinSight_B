@@ -56,19 +56,25 @@ export function SubmitButton({
   children,
   variant,
   size,
+  disabled,
 }: {
   children: React.ReactNode;
   variant?: "default" | "destructive" | "outline" | "ghost";
   size?: "default" | "sm";
+  disabled?: boolean;
 }) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" variant={variant} size={size} disabled={pending}>
+    <Button
+      type="submit"
+      variant={variant}
+      size={size}
+      disabled={pending || disabled}
+    >
       {pending ? "Memproses..." : children}
     </Button>
   );
 }
-
 export function FormMessage({ result }: { result: ActionResult | null }) {
   if (!result) return null;
   if (result.ok) {

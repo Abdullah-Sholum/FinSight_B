@@ -5,6 +5,7 @@ import type { DateRange } from "./insights";
 import { isMonthKey, shiftMonth } from "@/lib/dates";
 import { isRealDate } from "@/lib/validation/import-row";
 import * as ruleEffects from "@/lib/services/rule-effects";
+import type { BatchError } from "@/lib/import-types";
 
 export async function getRealDataset() {
   return prisma.dataset.findUnique({
@@ -262,4 +263,53 @@ export async function getQualityReport(today: string) {
     unrecordedCount: unrecorded.count,
     drift: { totalChanged: drift.totalChanged, metadataOnly: drift.metadataOnly },
   };
+}
+
+export async function getImportBatches() {
+  const batches = await prisma.importBatch.findMany({
+    orderBy: { id: "desc" },
+    take: 50,
+    select: {
+      id: true,
+      createdAt: true,
+      fileName: true,
+      status: true,
+      totalRows: true,
+      successRows: true,
+      failedRows: true,
+      errors: true,
+    },
+  });
+  if (batches.length === 0) return [];
+
+  const ids = batches.map((b) => b.id);
+  const [entryCounts, expenseCounts] = await Promise.all([
+    prisma.dailyEntry.groupBy({
+      by: ["importBatchId"],
+      where: { importBatchId: { in: ids } },
+      _count: { _all: true },
+    }),
+    prisma.expense.groupBy({
+      by: ["importBatchId"],
+      where: { importBatchId: { in: ids } },
+      _count: { _all: true },
+    }),
+  ]);
+  const entriesById = new Map(entryCounts.map((c) => [c.importBatchId, c._count._all]));
+  const expensesById = new Map(expenseCounts.map((c) => [c.importBatchId, c._count._all]));
+
+  return batches.map((b) => ({
+    id: b.id,
+    createdAt: b.createdAt.toISOString(),
+    fileName: b.fileName,
+    status: b.status,
+    totalRows: b.totalRows,
+    successRows: b.successRows,
+    failedRows: b.failedRows,
+    entriesLeft: entriesById.get(b.id) ?? 0,
+    expensesLeft: expensesById.get(b.id) ?? 0,
+    errors: Array.isArray(b.errors)
+      ? (b.errors as unknown as BatchError[]).slice(0, 100)
+      : [],
+  }));
 }

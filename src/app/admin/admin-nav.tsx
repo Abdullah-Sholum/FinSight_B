@@ -10,6 +10,7 @@ const LINKS = [
   { href: "/admin/kategori", label: "Kategori", exact: false },
   { href: "/admin/aturan", label: "Aturan", exact: false },
   { href: "/admin/kualitas", label: "Kualitas data", exact: false },
+  { href: "/admin/import", label: "Import", exact: false },
 ];
 
 export function AdminNav() {
