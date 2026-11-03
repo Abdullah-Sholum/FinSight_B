@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { auth, signOut } from "@/auth";
 import { Button } from "@/components/ui/button";
 import { AdminNav } from "./admin-nav";
-export const instant = false;
+// export const instant = false;
 
 export const metadata: Metadata = {
   title: "FinanceSight Admin",

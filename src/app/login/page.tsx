@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoginForm } from "./login-form";
 export const metadata = { robots: { index: false, follow: false } };
-export const instant = false;
+// export const instant = false;
 
 export default async function LoginPage({
   searchParams,

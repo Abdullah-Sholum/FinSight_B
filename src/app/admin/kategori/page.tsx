@@ -10,7 +10,7 @@ import {
 import { getCategoriesWithStats } from "@/lib/data/admin";
 import { rupiah } from "@/lib/format";
 import { CategoryRowActions, CreateCategoryButton } from "./category-dialogs";
-export const instant = false;
+// export const instant = false;
 
 
 export default async function CategoriesPage() {
