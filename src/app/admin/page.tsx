@@ -2,7 +2,7 @@ import { MonthlyChart } from "@/components/charts/monthly-chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAdminOverview } from "@/lib/data/admin";
 import { formatDate, formatMonth, percent, rupiah } from "@/lib/format";
-export const instant = false;
+// export const instant = false;
 
 function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (

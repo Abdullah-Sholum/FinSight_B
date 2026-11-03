@@ -11,7 +11,7 @@ async function main() {
   console.log(
     pub === null
       ? "OK: belum ada dataset sintesis terbit, publik mendapat null."
-      : `Dataset publik: ${pub.dataset.name}`,
+      : `Ada dataset sintesis terbit (dibuat ${pub.generatedAt}).`,
   );
 
   console.log("\n=== ADMIN (data asli) ===");
